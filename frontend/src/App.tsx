@@ -316,9 +316,7 @@ export default function App() {
       [name]: value
     }));
   }
-
-  console.log("Selected employee ID:", selectedEmployeeId);
-
+  
   function handleFeedbackFormChange(
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ): void {

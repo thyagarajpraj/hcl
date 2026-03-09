@@ -65,6 +65,8 @@ export async function login(email: string): Promise<{
     department: string;
   };
 }> {
+  
+  console.log(`Attempting to log in with email: ${email}`);
   const { data } = await api.post<{
     token: string;
     employee: {

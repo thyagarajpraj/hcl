@@ -10,6 +10,7 @@ export interface Employee {
   department: string;
   avgRating: number | null;
   feedbackCount: number;
+  role?: "employee" | "manager" | "admin";
 }
 
 export interface EmployeeReference {

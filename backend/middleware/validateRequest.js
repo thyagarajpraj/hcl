@@ -19,6 +19,7 @@ export const loginSchema = z.object({
 });
 
 export function validateRequest(schema) {
+  console.log("Creating validation middleware for schema:", schema);
   return (request, response, next) => {
     try {
       const validated = schema.parse(request.body);

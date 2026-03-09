@@ -1,6 +1,7 @@
 import Employee from "../models/Employee.js";
 import Feedback from "../models/Feedback.js";
 import createHttpError from "../utils/createHttpError.js";
+import { sanitizeInput } from "../utils/sanitizer.js";
 
 function normalizeEmployee(employee, statsByEmployeeId) {
   const stats = statsByEmployeeId.get(String(employee._id));
@@ -49,11 +50,15 @@ export async function listEmployees(_request, response, next) {
 export async function createEmployee(request, response, next) {
   try {
     const { name, email, department } = request.body;
+    
+    // Sanitize string inputs
+    const sanitizedName = sanitizeInput(name);
+    const sanitizedDepartment = sanitizeInput(department);
 
     const employee = await Employee.create({
-      name,
+      name: sanitizedName,
       email,
-      department
+      department: sanitizedDepartment
     });
 
     response.status(201).json({

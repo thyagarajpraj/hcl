@@ -4,6 +4,7 @@ export async function connectDB() {
   const mongoUri =
     process.env.MONGODB_URI || "mongodb://localhost:27017/employee_feedback";
 
+    console.log(`Connecting to MongoDB at ${mongoUri}...`);
   await mongoose.connect(mongoUri);
   console.log(`MongoDB connected at ${mongoUri}`);
 }

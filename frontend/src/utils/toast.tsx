@@ -3,20 +3,20 @@ import toast from "react-hot-toast";
 export function showSuccess(message: string): void {
   toast.success(message, {
     duration: 4000,
-    position: "top-right"
+    position: "bottom-center"
   });
 }
 
 export function showError(message: string): void {
   toast.error(message, {
     duration: 5000,
-    position: "top-right"
+    position: "bottom-center"
   });
 }
 
 export function showLoading(message: string): string {
   return toast.loading(message, {
-    position: "top-right"
+    position: "bottom-center"
   });
 }
 

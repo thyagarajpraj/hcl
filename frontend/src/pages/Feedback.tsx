@@ -1,14 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import FeedbackForm from "../components/FeedbackForm";
 import { EmptyState } from "../components/EmptyState";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import type {
-  Employee,
-  FeedbackEntry,
-  FeedbackFormData,
-  Summary
-} from "../types";
+import type { Employee, FeedbackEntry, FeedbackFormData, Summary } from "../types";
 
 interface FeedbackProps {
   employees: Employee[];
@@ -29,7 +24,7 @@ interface FeedbackProps {
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
   }).format(new Date(value));
 }
 
@@ -44,11 +39,15 @@ export default function Feedback({
   onSubmit,
   submitting,
   deletingFeedbackId,
-  onDeleteFeedback
+  onDeleteFeedback,
 }: FeedbackProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  useEffect(() => {
+    console.log("confirmDeleteId", confirmDeleteId);
+  }, [confirmDeleteId]);
   const handleDeleteClick = (feedbackId: string) => {
+    console.log("handleDeleteClick", feedbackId);
     setConfirmDeleteId(feedbackId);
   };
 
@@ -146,7 +145,7 @@ export default function Feedback({
       </div>
 
       <ConfirmDialog
-        isOpen={!!confirmDeleteId}
+        isOpen={confirmDeleteId !== null}
         title="Delete feedback?"
         description="This action cannot be undone. Are you sure you want to delete this feedback?"
         confirmText="Delete"

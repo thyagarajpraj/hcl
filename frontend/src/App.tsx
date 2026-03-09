@@ -25,9 +25,11 @@ import type {
   Summary
 } from "./types";
 import { showSuccess, showError } from "./utils/toast";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const Employees = lazy(() => import("./pages/Employees"));
 const Feedback = lazy(() => import("./pages/Feedback"));
+const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
 
 function getErrorMessage(error: unknown, fallbackMessage: string): string {
@@ -315,6 +317,8 @@ export default function App() {
     }));
   }
 
+  console.log("Selected employee ID:", selectedEmployeeId);
+
   function handleFeedbackFormChange(
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ): void {
@@ -391,138 +395,207 @@ export default function App() {
 
   if (loading) {
     return (
-      <main className="page-shell">
-        <section className="loading-card">
-          <p className="eyebrow">{APP_NAME}</p>
-          <h1>Loading dashboard...</h1>
-        </section>
-      </main>
+      <ErrorBoundary>
+        <main className="page-shell">
+          <section className="loading-card">
+            <p className="eyebrow">{APP_NAME}</p>
+            <h1>Loading dashboard...</h1>
+          </section>
+        </main>
+      </ErrorBoundary>
     );
   }
 
+  const isAdmin = loggedInEmployee?.role === "admin";
+
   return (
-    <main className="page-shell">
-      <section className="hero-panel">
-        <div>
-          <p className="eyebrow">{APP_NAME}</p>
-          <h1>Mongo-backed feedback with clear ownership rules.</h1>
-          <p className="hero-copy">
-            Create employees, submit peer feedback, enforce the 24-hour duplicate
-            rule, and review rating trends from a single dashboard.
-          </p>
-        </div>
-
-        <div className="hero-metrics">
-          <article className="metric-card">
-            <span className="metric-label">Signed in</span>
-            <strong>{loggedInEmployee ? loggedInEmployee.name : "Not signed in"}</strong>
-          </article>
-          <article className="metric-card">
-            <span className="metric-label">Employees</span>
-            <strong>{employees.length}</strong>
-          </article>
-          <article className="metric-card">
-            <span className="metric-label">Average rating</span>
-            <strong>{overallAverage}</strong>
-          </article>
-          <article className="metric-card">
-            <span className="metric-label">Top rated</span>
-            <strong>{topEmployee}</strong>
-          </article>
-        </div>
-      </section>
-
-      {(error || successMessage) && (
-        <section
-          ref={error ? errorBannerRef : null}
-          className={error ? "banner banner-error" : "banner banner-success"}
-        >
-          {error || successMessage}
-        </section>
-      )}
-
-      {!loggedInEmployee ? (
-        <Suspense
-          fallback={
-            <section className="panel">
-              <p className="section-kicker">Login</p>
-              <h2>Loading section...</h2>
-            </section>
-          }
-        >
-          <Login
-            employees={employees}
-            loginEmployeeId={loginEmployeeId}
-            onLoginChange={handleLoginChange}
-            onLoginSubmit={handleLoginSubmit}
-            employeeForm={employeeForm}
-            onEmployeeFormChange={handleEmployeeFormChange}
-            onEmployeeCreate={handleEmployeeSubmit}
-            creatingEmployee={creatingEmployee}
-            loggingIn={loggingIn}
-          />
-        </Suspense>
-      ) : (
-        <>
-          <div className="auth-toolbar">
-            <span className="auth-chip">
-              Logged in as {loggedInEmployee.name} • {loggedInEmployee.department}
-            </span>
-            <button type="button" className="inline-button" onClick={handleLogout}>
-              Log out
-            </button>
+    <ErrorBoundary>
+      <main className="page-shell">
+        <section className="hero-panel">
+          <div>
+            <p className="eyebrow">{APP_NAME}</p>
+            <h1>Mongo-backed feedback with clear ownership rules.</h1>
+            <p className="hero-copy">
+              Create employees, submit peer feedback, enforce the 24-hour duplicate
+              rule, and review rating trends from a single dashboard.
+            </p>
           </div>
 
-          <section className="dashboard-grid">
-            <Suspense
-              fallback={
-                <section className="panel">
-                  <p className="section-kicker">Employees</p>
-                  <h2>Loading section...</h2>
-                </section>
-              }
-            >
-              <Employees
-                employees={employees}
-                form={employeeForm}
-                onFormChange={handleEmployeeFormChange}
-                onSubmit={handleEmployeeSubmit}
-                submitting={creatingEmployee}
-                selectedEmployeeId={selectedEmployeeId}
-                onSelectEmployee={setSelectedEmployeeId}
-              />
-            </Suspense>
+          <div className="hero-metrics">
+            <article className="metric-card">
+              <span className="metric-label">Signed in</span>
+              <strong>{loggedInEmployee ? loggedInEmployee.name : "Not signed in"}</strong>
+            </article>
+            <article className="metric-card">
+              <span className="metric-label">Employees</span>
+              <strong>{employees.length}</strong>
+            </article>
+            <article className="metric-card">
+              <span className="metric-label">Average rating</span>
+              <strong>{overallAverage}</strong>
+            </article>
+            <article className="metric-card">
+              <span className="metric-label">Top rated</span>
+              <strong>{topEmployee}</strong>
+            </article>
+          </div>
+        </section>
 
-            <Suspense
-              fallback={
-                <section className="panel">
-                  <p className="section-kicker">Feedback</p>
-                  <h2>Loading section...</h2>
-                </section>
-              }
-            >
-              <Feedback
-                employees={employees}
-                loggedInEmployee={loggedInEmployee}
-                selectedEmployee={selectedEmployee}
-                summary={summary}
-                feedback={feedback}
-                form={feedbackForm}
-                onFormChange={handleFeedbackFormChange}
-                onSubmit={handleFeedbackSubmit}
-                submitting={submittingFeedback}
-                deletingFeedbackId={deletingFeedbackId}
-                onDeleteFeedback={handleDeleteFeedback}
-              />
-            </Suspense>
+        {(error || successMessage) && (
+          <section
+            ref={error ? errorBannerRef : null}
+            className={error ? "banner banner-error" : "banner banner-success"}
+          >
+            {error || successMessage}
           </section>
-        </>
-      )}
+        )}
 
-      {loadingFeedback && (
-        <section className="banner banner-success">Refreshing feedback view...</section>
-      )}
-      <Toaster />
-    </main>
+        {!loggedInEmployee ? (
+          <Suspense
+            fallback={
+              <section className="panel">
+                <p className="section-kicker">Login</p>
+                <h2>Loading section...</h2>
+              </section>
+            }
+          >
+            <Login
+              employees={employees}
+              loginEmployeeId={loginEmployeeId}
+              onLoginChange={handleLoginChange}
+              onLoginSubmit={handleLoginSubmit}
+              employeeForm={employeeForm}
+              onEmployeeFormChange={handleEmployeeFormChange}
+              onEmployeeCreate={handleEmployeeSubmit}
+              creatingEmployee={creatingEmployee}
+              loggingIn={loggingIn}
+            />
+          </Suspense>
+        ) : isAdmin ? (
+          <>
+            <div className="auth-toolbar">
+              <span className="auth-chip">
+                🔑 Admin: {loggedInEmployee.name} • {loggedInEmployee.department}
+              </span>
+              <button type="button" className="inline-button" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
+
+            <Suspense
+              fallback={
+                <section className="panel">
+                  <p className="section-kicker">Admin</p>
+                  <h2>Loading admin dashboard...</h2>
+                </section>
+              }
+            >
+              <Admin />
+            </Suspense>
+          </>
+        ) : (
+          <>
+            <div className="auth-toolbar">
+              <span className="auth-chip">
+                Logged in as {loggedInEmployee.name} • {loggedInEmployee.department}
+              </span>
+              <button type="button" className="inline-button" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
+
+            <section className="dashboard-grid">
+              <Suspense
+                fallback={
+                  <section className="panel">
+                    <p className="section-kicker">Employees</p>
+                    <h2>Loading section...</h2>
+                  </section>
+                }
+              >
+                <Employees
+                  employees={employees}
+                  form={employeeForm}
+                  onFormChange={handleEmployeeFormChange}
+                  onSubmit={handleEmployeeSubmit}
+                  submitting={creatingEmployee}
+                  selectedEmployeeId={selectedEmployeeId}
+                  onSelectEmployee={setSelectedEmployeeId}
+                />
+              </Suspense>
+
+              <Suspense
+                fallback={
+                  <section className="panel">
+                    <p className="section-kicker">Feedback</p>
+                    <h2>Loading section...</h2>
+                  </section>
+                }
+              >
+                <Feedback
+                  employees={employees}
+                  loggedInEmployee={loggedInEmployee}
+                  selectedEmployee={selectedEmployee}
+                  summary={summary}
+                  feedback={feedback}
+                  form={feedbackForm}
+                  onFormChange={handleFeedbackFormChange}
+                  onSubmit={handleFeedbackSubmit}
+                  submitting={submittingFeedback}
+                  deletingFeedbackId={deletingFeedbackId}
+                  onDeleteFeedback={handleDeleteFeedback}
+                />
+              </Suspense>
+            </section>
+          </>
+        )}
+
+        {loadingFeedback && (
+          <section className="banner banner-success">Refreshing feedback view...</section>
+        )}
+        <Toaster 
+          position="bottom-center"
+          reverseOrder={false}
+          gutter={12}
+          containerStyle={{
+            position: "fixed",
+            bottom: "60px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 9999
+          }}
+          toastOptions={{
+            duration: 4000,
+            style: {
+              borderRadius: "12px",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
+              padding: "16px 24px",
+              minWidth: "320px",
+              maxWidth: "520px",
+              fontSize: "15px",
+              fontWeight: "500"
+            },
+            success: {
+              style: {
+                background: "#10b981",
+                color: "#fff"
+              }
+            },
+            error: {
+              style: {
+                background: "#ef4444",
+                color: "#fff"
+              }
+            },
+            loading: {
+              style: {
+                background: "#3b82f6",
+                color: "#fff"
+              }
+            }
+          }}
+        />
+      </main>
+    </ErrorBoundary>
   );
 }

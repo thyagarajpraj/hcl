@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   color: #14213d;

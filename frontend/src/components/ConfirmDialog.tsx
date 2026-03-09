@@ -19,6 +19,7 @@ export function ConfirmDialog({
   onCancel,
   isDangerous = false,
 }: ConfirmDialogProps) {
+  console.log("ConfirmDialog isOpen:", isOpen);
   if (!isOpen) return null;
 
   return (

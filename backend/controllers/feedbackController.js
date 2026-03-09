@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Employee from "../models/Employee.js";
 import Feedback from "../models/Feedback.js";
 import createHttpError from "../utils/createHttpError.js";
+import { sanitizeInput } from "../utils/sanitizer.js";
+import { sendFeedbackNotification } from "../utils/emailService.js";
 
 function isValidObjectId(value) {
   return mongoose.Types.ObjectId.isValid(value);
@@ -49,6 +51,7 @@ export async function submitFeedback(request, response, next) {
   try {
     const { rating, comment, givenBy, givenTo } = request.body;
     const normalizedRating = Number(rating);
+    const sanitizedComment = sanitizeInput(comment);
 
     if (!isValidObjectId(givenBy) || !isValidObjectId(givenTo)) {
       throw createHttpError(400, "Invalid employee id.");
@@ -86,12 +89,30 @@ export async function submitFeedback(request, response, next) {
 
     const createdFeedback = await Feedback.create({
       rating: normalizedRating,
-      comment,
+      comment: sanitizedComment,
       givenBy,
       givenTo
     });
 
     const feedback = await getPopulatedFeedbackById(createdFeedback._id);
+
+    // Send email notification (non-blocking)
+    const recipientEmployee = await Employee.findById(givenTo);
+    const senderEmployee = await Employee.findById(givenBy);
+    if (recipientEmployee && senderEmployee) {
+      sendFeedbackNotification(
+        recipientEmployee.email,
+        recipientEmployee.name,
+        {
+          givenBy: senderEmployee.name,
+          rating: normalizedRating,
+          comment: sanitizedComment
+        }
+      ).catch(err => {
+        // Log but don't fail the request if email fails
+        console.error("Email notification failed:", err);
+      });
+    }
 
     response.status(201).json({
       message: "Feedback submitted successfully.",
@@ -198,10 +219,14 @@ export async function deleteFeedback(request, response, next) {
       throw createHttpError(403, "Not allowed to delete this feedback.");
     }
 
-    await feedback.deleteOne();
+    // Soft delete - mark as deleted instead of removing
+    await Feedback.findByIdAndUpdate(id, {
+      isDeleted: true,
+      deletedAt: new Date()
+    });
 
     response.json({
-      message: "Deleted"
+      message: "Feedback deleted successfully."
     });
   } catch (error) {
     next(error);
